@@ -130,6 +130,7 @@ import de.usd.cstchef.operations.setter.HttpHeaderSetter;
 import de.usd.cstchef.operations.setter.HttpJsonSetter;
 import de.usd.cstchef.operations.setter.HttpMultipartSetter;
 import de.usd.cstchef.operations.setter.HttpPostSetter;
+import de.usd.cstchef.operations.setter.HttpRemoveCookie;
 import de.usd.cstchef.operations.setter.HttpSetBody;
 import de.usd.cstchef.operations.setter.HttpSetCookie;
 import de.usd.cstchef.operations.setter.HttpSetUri;
@@ -394,7 +395,7 @@ public class Utils {
                 Hmac.class, HttpBodyExtractor.class, HttpCookieExtractor.class, HttpGetExtractor.class,
                 HttpGetSetter.class, HttpHeaderExtractor.class, HttpHeaderSetter.class, HttpHeaderRemove.class,
                 HttpJsonExtractor.class, HttpJsonSetter.class, HttpMethodExtractor.class, HttpMultipartExtractor.class,
-                HttpMultipartSetter.class, HttpPostExtractor.class, HttpPostSetter.class, HttpSetBody.class,
+                HttpMultipartSetter.class, HttpPostExtractor.class, HttpPostSetter.class, HttpRemoveCookie.class, HttpSetBody.class,
                 HttpSetCookie.class, HttpSetUri.class, HttpUriExtractor.class, HttpXmlExtractor.class,
                 HttpXmlSetter.class, HtmlEncode.class, HtmlDecode.class,
                 Inflate.class,
