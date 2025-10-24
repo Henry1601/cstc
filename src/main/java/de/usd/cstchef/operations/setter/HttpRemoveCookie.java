@@ -12,7 +12,7 @@ import de.usd.cstchef.operations.OperationCategory;
 @OperationInfos(name = "Remove HTTP Cookie", category = OperationCategory.SETTER, description = "Remove the specified HTTP cookie.")
 public class HttpRemoveCookie extends Operation {
 
-    private VariableTextField cookie;
+    protected VariableTextField cookie;
 
     @Override
     protected ByteArray perform(ByteArray input) throws Exception {
@@ -25,11 +25,11 @@ public class HttpRemoveCookie extends Operation {
         }
 
         if(messageType == MessageType.REQUEST) {
-            HttpRequest request = HttpRequest.httpRequest(input);
+            HttpRequest request = factory.createHttpRequest(input);
 
             // has Cookie header
             if(request.hasHeader("Cookie")) {
-                String cookies = request.header("Cookie").value();
+                String cookies = request.headerValue("Cookie");
                 // has this particular cookie set
                 if(cookies.contains(cookieName + "=")) {
                     String[] c = cookies.split("; ");
@@ -57,11 +57,11 @@ public class HttpRemoveCookie extends Operation {
             }
         }
         else if(messageType == MessageType.RESPONSE) {
-            HttpResponse response = HttpResponse.httpResponse(input);
+            HttpResponse response = factory.createHttpResponse(input);
             // has cookie
             if(response.hasCookie(cookieName)) {
                 String responseString = response.toString();
-                return factory.createByteArray(responseString.replaceAll("Set-Cookie: " + cookieName + "=(.)*[\r\n]{1,2}", ""));
+                return factory.createByteArray(responseString.replaceAll("Set-Cookie: " + cookieName + "=(.)*(\r\n|\n)", ""));
             }
             // no cookie
             else {
