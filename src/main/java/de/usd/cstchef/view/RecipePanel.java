@@ -16,12 +16,12 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
 
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
@@ -53,7 +53,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import burp.BurpUtils;
 import burp.CstcMessageEditorController;
 import burp.Logger;
-import burp.MyExtensionProvidedHttpResponseEditorFormatting;
 import burp.api.montoya.core.BurpSuiteEdition;
 import burp.api.montoya.core.ByteArray;
 import burp.api.montoya.http.message.HttpRequestResponse;
@@ -746,7 +745,7 @@ public class RecipePanel extends JPanel implements ChangeListener {
             @Override
             public void run() {
                 ByteArray result = doBake(inputText.getRequest() == null ? inputText.getContents() /* inputText.getResponse().toByteArray() */ : inputText.getRequest().toByteArray(), inputText.getRequestToResponse());
-                HashMap<String, ByteArray> variables = VariableStore.getInstance().getVariables();
+                TreeMap<String, ByteArray> variables = VariableStore.getInstance().getVariables();
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {

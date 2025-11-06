@@ -5,7 +5,6 @@ import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.HashMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -70,7 +69,7 @@ public class VariablesWindow extends JFrame {
         this.add(scrollPane);
     }
 
-    public void refresh(HashMap<String, ByteArray> variables) {
+    public void refresh(TreeMap<String, ByteArray> variables) {
         DefaultTableModel model = (DefaultTableModel) this.table.getModel();
         model.setRowCount(0);
         this.emptyLbl.setVisible(variables.isEmpty());
