@@ -22,6 +22,8 @@ import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
@@ -102,6 +104,8 @@ public class RecipePanel extends JPanel implements ChangeListener {
 
     private JSpinner autoBakeInterval = new JSpinner(new SpinnerNumberModel(1000, 500, 900000, 200));
     private Timer autoBakeTimer;
+
+    private JCheckBox contentLengthCheckbox = new JCheckBox("Update Content-Length");
 
     public RecipePanel(BurpOperation operation) {
 
@@ -312,6 +316,9 @@ public class RecipePanel extends JPanel implements ChangeListener {
                 //bake(false);
             }
         });
+
+        contentLengthCheckbox.setSelected(true);
+        activeOperationsPanel.addActionComponent(contentLengthCheckbox);
 
         JButton variablesButton = new JButton("Variables");
         activeOperationsPanel.addActionComponent(variablesButton);
@@ -688,6 +695,16 @@ public class RecipePanel extends JPanel implements ChangeListener {
     }
 
     private ByteArray doBake(ByteArray input, ByteArray requestToResponse) {
+
+        // save content length in case it is set. null because headerValue returns null if header is not found
+        String contentLength = "null";
+        
+        if(isHttpRequest(input)) {
+            contentLength = HttpRequest.httpRequest(input).headerValue("Content-Length");
+        }
+        else if(isHttpResponse(input)) {
+            contentLength = HttpResponse.httpResponse(input).headerValue("Content-Length");
+        }
         
         ByteArray result = input.copy();
         ByteArray intermediateResult = input;
@@ -730,6 +747,22 @@ public class RecipePanel extends JPanel implements ChangeListener {
             if (outputChanged) {
                 result = intermediateResult;
                 store.setVariable(stepVariableName, intermediateResult);
+            }
+
+            // if isSelected update the content length
+            if(contentLengthCheckbox.isSelected()) {
+                if(isHttpRequest(input)) {
+                    result = HttpRequest.httpRequest(result).withBody(HttpRequest.httpRequest(result).body()).toByteArray();
+                }
+                else if(isHttpResponse(input)) {
+                    result = HttpResponse.httpResponse(result).withBody(HttpResponse.httpResponse(result).body()).toByteArray();
+                }
+            }
+            // if not set the previous value again in case it was changed during baking
+            else {
+                if(!contentLength.equals("null")) {
+                    result = HttpRequest.httpRequest(result).withHeader("Content-Length", contentLength).toByteArray();
+                }
             }
         }
 
@@ -857,6 +890,32 @@ public class RecipePanel extends JPanel implements ChangeListener {
 
         if (!BurpUtils.getInstance().getApi().burpSuite().version().edition().equals(BurpSuiteEdition.COMMUNITY_EDITION)) {
             saveRecipe();
+        }
+    }
+
+    private boolean isHttpRequest(ByteArray input) {
+        String httpRequestRegex = "(GET|POST|HEAD|PUT|DELETE|CONNECT|OPTIONS|TRACE|PATCH)\\s/\\S*\\sHTTP/\\d(\\.\\d)?";
+
+        final Pattern requestPattern = Pattern.compile(httpRequestRegex);
+        final Matcher requestMatcher = requestPattern.matcher(input.toString().split("\n")[0].trim());
+        if (requestMatcher.matches()) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    private boolean isHttpResponse(ByteArray input) {
+        String httpResponseRegex = "HTTP/\\d(\\.\\d)?\\s\\d{3}\\s(\\w*\\s?)*";
+
+        final Pattern responsePattern = Pattern.compile(httpResponseRegex);
+        final Matcher responseMatcher = responsePattern.matcher(input.toString().split("\n")[0].trim());
+        if (responseMatcher.matches()) {
+            return true;
+        }
+        else {
+            return false;
         }
     }
 
