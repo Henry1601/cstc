@@ -98,6 +98,10 @@ The *CSTC Formatting* tab is available in all of Burp's HTTP message editors and
 
 Only the HTTP request message editor in the *Repeater* has an additional tab called *CSTC*. Here, the recipe currently defined in *Outgoing* is applied to the request, making it visible how the request is sent to the server **if** the CSTC is activated for the *Repeater*.
 
+### I have an HTTP request or response that already contains variables defined using the `${name}` syntax. How do I resolve them using CSTC?
+
+You can use the *Concatenate* operation for this. The predefined variable `$input` allows you to access the input of the recipe and output it, with variables being resolved along the way. This works in exactly the same way with text that has already been manipulated in CSTC. Simply save it in a variable and use this in *Concatenate* instead.
+
 ### How to Add Custom Operations to the CSTC?
 
 If you're missing an operation in the CSTC, we encourage you to give it a shot at implementing it yourself! 
