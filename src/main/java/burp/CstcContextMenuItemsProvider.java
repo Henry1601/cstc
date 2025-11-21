@@ -1,16 +1,18 @@
 package burp;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JMenuItem;
+import javax.swing.JTabbedPane;
 
 import burp.api.montoya.MontoyaApi;
-import burp.api.montoya.core.ByteArray;
-import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.ui.contextmenu.ContextMenuEvent;
 import burp.api.montoya.ui.contextmenu.ContextMenuItemsProvider;
 import de.usd.cstchef.Utils.MessageType;
@@ -19,6 +21,8 @@ import de.usd.cstchef.view.View;
 public class CstcContextMenuItemsProvider implements ContextMenuItemsProvider {
     private MontoyaApi api;
     private View view;
+
+    private Timer timer = new Timer();
 
     public CstcContextMenuItemsProvider(MontoyaApi api, View view)
     {
@@ -43,6 +47,7 @@ public class CstcContextMenuItemsProvider implements ContextMenuItemsProvider {
         incomingMenu.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                highlightExtensionName();
                 view.getIncomingRecipePanel().setInput(event.messageEditorRequestResponse().isPresent() ? event.messageEditorRequestResponse().get().requestResponse() : event.selectedRequestResponses().get(0));
             }
         });
@@ -50,6 +55,7 @@ public class CstcContextMenuItemsProvider implements ContextMenuItemsProvider {
         outgoingMenu.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                highlightExtensionName();
                 view.getOutgoingRecipePanel().setInput(event.messageEditorRequestResponse().isPresent() ? event.messageEditorRequestResponse().get().requestResponse() : event.selectedRequestResponses().get(0));
             }
         });
@@ -57,6 +63,7 @@ public class CstcContextMenuItemsProvider implements ContextMenuItemsProvider {
         incomingResFormatMenu.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                highlightExtensionName();
                 view.getFormatRecipePanel().setFormatMessage(event.messageEditorRequestResponse().isPresent() ? event.messageEditorRequestResponse().get().requestResponse() : event.selectedRequestResponses().get(0), MessageType.RESPONSE);
             }
         });
@@ -64,10 +71,40 @@ public class CstcContextMenuItemsProvider implements ContextMenuItemsProvider {
         incomingReqFormatMenu.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                highlightExtensionName();
                 view.getFormatRecipePanel().setFormatMessage(event.messageEditorRequestResponse().isPresent() ? event.messageEditorRequestResponse().get().requestResponse() : event.selectedRequestResponses().get(0), MessageType.REQUEST);
             }
         });
 
         return menuItems;
+    }
+
+    private void highlightExtensionName() {
+        TimerTask task = new TimerTask() {
+
+        @Override
+        public void run() {
+            resetHighlighting();
+        }
+        
+        };
+        JTabbedPane parentTabbedPane = (JTabbedPane) BurpUtils.getInstance().getView().getParent();
+        for(int i = 0; i < parentTabbedPane.getTabCount(); i++) {
+            if(parentTabbedPane.getTitleAt(i).contains("CSTC")) {
+                parentTabbedPane.setBackgroundAt(i, new Color(0xff6633));
+                timer.schedule(task, 3000);
+                return;
+            }
+        }     
+    }
+
+    private void resetHighlighting() {
+        JTabbedPane parentTabbedPane = (JTabbedPane) BurpUtils.getInstance().getView().getParent();
+        for(int i = 0; i < parentTabbedPane.getTabCount(); i++) {
+            if(parentTabbedPane.getTitleAt(i).contains("CSTC")) {
+                parentTabbedPane.setBackgroundAt(i, new Color(0x000000));
+                return;
+            }
+        }
     }
 }
