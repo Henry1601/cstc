@@ -179,7 +179,8 @@ public class RecipeStepPanel extends JPanel {
 			if (!(op instanceof Operation)) {
 				continue;
 			}
-			operationsLine.remove(op);
+			//operationsLine.remove(op);
+            ((Operation)op).triggerRemove();
 		}
 		operationsLine.revalidate();
 		operationsLine.repaint();

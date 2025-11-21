@@ -88,6 +88,8 @@ public abstract class Operation extends JPanel {
     private String comment;
     private JButton commentBtn;
 
+    private JButton removeBtn;
+
     private int operationSkip = 0;
     private int laneSkip = 0;
 
@@ -128,7 +130,7 @@ public abstract class Operation extends JPanel {
         disableBtn.setToolTipText("Disable");
         JButton breakpointBtn = createIconButton(Operation.breakIcon);
         breakpointBtn.setToolTipText("Breakpoint");
-        JButton removeBtn = createIconButton(Operation.removeIcon);
+        removeBtn = createIconButton(Operation.removeIcon);
         removeBtn.setToolTipText("Remove");
         JButton helpBtn = createIconButton(Operation.helpIcon);
         helpBtn.setToolTipText(opInfos.description());
@@ -169,16 +171,10 @@ public abstract class Operation extends JPanel {
                 notifyChange();
             }
         });
-        JPanel me = this;
         removeBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Container parent = getParent();
-                onRemove();
-                parent.remove(me);
-                parent.validate();
-                parent.repaint();
-                notifyChange();
+                triggerRemove();
             }
         });
 
@@ -212,6 +208,15 @@ public abstract class Operation extends JPanel {
 
         this.createUI();
         this.refreshColors();
+    }
+
+    public void triggerRemove() {
+        Container parent = getParent();
+        onRemove();
+        parent.remove(this);
+        parent.validate();
+        parent.repaint();
+        notifyChange();
     }
 
     public void setRecipeStepPanel(RecipeStepPanel recipeStepPanel) {
