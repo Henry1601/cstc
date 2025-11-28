@@ -38,6 +38,7 @@ public class RecipeStepPanel extends JPanel {
     private ChangeListener changeListener;
     private JTextField contentTextField;
 
+    private RecipePanel recipePanel;
     private BurpOperation operation;
 
     private String comment;
@@ -46,9 +47,10 @@ public class RecipeStepPanel extends JPanel {
     private static ImageIcon commentIcon = new ImageIcon(Operation.class.getResource("/comment.png"));
     private static ImageIcon noCommentIcon = new ImageIcon(Operation.class.getResource("/no_comment.png"));
 
-    public RecipeStepPanel(String title, ChangeListener changelistener, BurpOperation operation) {
+    public RecipeStepPanel(String title, ChangeListener changelistener, RecipePanel recipePanel) {
         this.changeListener = changelistener;
-        this.operation = operation;
+        this.recipePanel = recipePanel;
+        this.operation = recipePanel.getOperation();
         this.setLayout(new BorderLayout());
         this.setPreferredSize(new Dimension(350, 0));
 
@@ -222,5 +224,9 @@ public class RecipeStepPanel extends JPanel {
         this.comment = "";
         commentBtn.setToolTipText("");
         commentBtn.setIcon(RecipeStepPanel.noCommentIcon);
+    }
+
+    public RecipePanel getRecipePanel() {
+        return this.recipePanel;
     }
 }

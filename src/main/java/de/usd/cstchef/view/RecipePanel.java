@@ -107,6 +107,8 @@ public class RecipePanel extends JPanel implements ChangeListener {
 
     private JCheckBox contentLengthCheckbox = new JCheckBox("Update Content-Length");
 
+    private GridBagConstraints recipeStepPanelConstraints;
+
     public RecipePanel(BurpOperation operation) {
 
         this.operation = operation;
@@ -351,10 +353,10 @@ public class RecipePanel extends JPanel implements ChangeListener {
         JPanel dummyPanel = new JPanel();
         dummyPanel.setBackground(Color.YELLOW);
 
-        GridBagConstraints co = new GridBagConstraints();
-        co.gridheight = GridBagConstraints.REMAINDER;
-        co.weighty = 1;
-        co.fill = GridBagConstraints.VERTICAL;
+        recipeStepPanelConstraints = new GridBagConstraints();
+        recipeStepPanelConstraints.gridheight = GridBagConstraints.REMAINDER;
+        recipeStepPanelConstraints.weighty = 1;
+        recipeStepPanelConstraints.fill = GridBagConstraints.VERTICAL;
 
         operationLines.add(dummyPanel, gbc); // this is the magic!11!!
 
@@ -376,7 +378,7 @@ public class RecipePanel extends JPanel implements ChangeListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(operationSteps < 100) {
-                    increaseLaneNumber(1);
+                    insertLaneAt(operationSteps);
                 }
 
                 // scroll max to the right if a lane is added. invokeLater because the maximum needs to be updated in the event queue first
@@ -393,15 +395,15 @@ public class RecipePanel extends JPanel implements ChangeListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(operationSteps > 1) {
-                    decreaseLaneNumber(1);
+                    deleteLaneAt(operationSteps - 1);
                 }
             }
             
         });
 
         for (int i = operationSteps; i > 0; i--) {
-            RecipeStepPanel opPanel = new RecipeStepPanel("Lane " + String.valueOf(i), this, this.operation);
-            operationLines.add(opPanel, co, 0);
+            RecipeStepPanel opPanel = new RecipeStepPanel("Lane " + String.valueOf(i), this, this);
+            operationLines.add(opPanel, recipeStepPanelConstraints, 0);
 
             JPanel panel = opPanel.getOperationsPanel();
             MoveOperationMouseAdapter moma = new MoveOperationMouseAdapter(opPanel, operationLines);
@@ -464,34 +466,32 @@ public class RecipePanel extends JPanel implements ChangeListener {
                 this.autoBakeInterval.setEnabled(true);
             }
         }
-    }   
-
-    private void increaseLaneNumber(int number) {
-        this.operationSteps += number;
-
-        GridBagConstraints co = new GridBagConstraints();
-        co.gridheight = GridBagConstraints.REMAINDER;
-        co.weighty = 1;
-        co.fill = GridBagConstraints.VERTICAL;
-
-        for(int i = 0; i < number; i++) {
-            RecipeStepPanel opPanel = new RecipeStepPanel("Lane " + String.valueOf(operationSteps - (number - i) + 1), this, this.operation);
-            operationLines.add(opPanel, co, operationSteps - (number - i));
-            operationLines.revalidate();
-            operationLines.repaint();
-
-            JPanel panel = opPanel.getOperationsPanel();
-            MoveOperationMouseAdapter moma = new MoveOperationMouseAdapter(opPanel, operationLines);
-            panel.addMouseListener(moma);
-            panel.addMouseMotionListener(moma);
-        }
     }
 
-    private void decreaseLaneNumber(int number) {
-        int index = this.operationSteps;
-        this.operationSteps -= number;
-        for(int i = 0; i < number; i++) {
-            operationLines.remove(index - 1 - i);
+    public void insertLaneAt(int index) {
+        this.operationSteps++;
+
+        if(index == -1) {
+            index = 0;
+        }
+
+        RecipeStepPanel opPanel = new RecipeStepPanel("Lane " + String.valueOf(operationSteps), this, this);
+        operationLines.add(opPanel, recipeStepPanelConstraints, index);
+        operationLines.revalidate();
+        operationLines.repaint();
+
+        JPanel panel = opPanel.getOperationsPanel();
+        MoveOperationMouseAdapter moma = new MoveOperationMouseAdapter(opPanel, operationLines);
+        panel.addMouseListener(moma);
+        panel.addMouseMotionListener(moma);
+
+
+    }
+
+    public void deleteLaneAt(int index) {
+        if(operationSteps > 1) {
+            this.operationSteps--;
+            operationLines.remove(index);
             operationLines.revalidate();
             operationLines.repaint();
         }
@@ -573,7 +573,9 @@ public class RecipePanel extends JPanel implements ChangeListener {
         }
 
         if(stepNodes.size() > operationSteps) {
-            increaseLaneNumber(stepNodes.size() - operationSteps);
+            for(int i = 0; i <= (stepNodes.size() - operationSteps); i++) {
+                insertLaneAt(operationSteps);
+            }
         }
 
         for (int step = 0; step < stepNodes.size(); step++) {
@@ -868,11 +870,18 @@ public class RecipePanel extends JPanel implements ChangeListener {
     }
 
     private void clear() {
-        if(this.operationSteps < 10) {
-            increaseLaneNumber(10 - this.operationSteps);
+
+        int currentOperationSteps = this.operationSteps;
+
+        if(currentOperationSteps < 10) {
+            for(int i = 0; i <= (10 - currentOperationSteps) - 1; i++) {
+                insertLaneAt(currentOperationSteps);
+            }
         }
-        else if(this.operationSteps > 10) {
-            decreaseLaneNumber(this.operationSteps - 10);
+        else if(currentOperationSteps > 10) {
+            for(int i = currentOperationSteps - 10 - 1; i >= 0; i--) {
+                deleteLaneAt(i);
+            }
         }
         
         for (int step = 0; step < this.operationSteps; step++) {
@@ -917,6 +926,22 @@ public class RecipePanel extends JPanel implements ChangeListener {
         else {
             return false;
         }
+    }
+
+    public BurpOperation getOperation() {
+        return this.operation;
+    }
+
+    public int getIndexOf(RecipeStepPanel recipeStepPanel) {
+        Component[] recipeStepPanels = operationLines.getComponents();
+
+        for(int i = 0; i < recipeStepPanels.length; i++) {
+            if(recipeStepPanels[i] == recipeStepPanel) {
+                return i;
+            }
+        }
+
+        return -2;
     }
 
 }
