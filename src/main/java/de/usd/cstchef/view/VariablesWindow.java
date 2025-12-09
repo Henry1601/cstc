@@ -11,6 +11,7 @@ import java.util.SortedMap;
 import java.util.TreeMap; 
 
 import javax.swing.AbstractCellEditor;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -24,10 +25,13 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn; 
 
 import burp.api.montoya.core.ByteArray;
-import de.usd.cstchef.VariableStore; 
+import de.usd.cstchef.VariableStore;
+import de.usd.cstchef.operations.Operation; 
 
 public class VariablesWindow extends JFrame {
+
     private static VariablesWindow instance;
+    private static ImageIcon deleteVariableIcon = new ImageIcon(Operation.class.getResource("/delete-variable.png"));
 
     public static VariablesWindow getInstance() {
         if (VariablesWindow.instance == null) {
@@ -91,7 +95,7 @@ public class VariablesWindow extends JFrame {
 
         for (String key : sortedMap.keySet()) {
             // Third column holds the button label; actual button rendering/editor handles actions
-            model.addRow(new Object[] { key, sortedMap.get(key).toString(), "Delete" });
+            model.addRow(new Object[] { key, sortedMap.get(key).toString(), deleteVariableIcon });
         }
     }
 
@@ -109,7 +113,8 @@ public class VariablesWindow extends JFrame {
     // Button renderer for Delete column
     private class ButtonRenderer extends JButton implements TableCellRenderer {
         public ButtonRenderer() {
-            setText("Delete");
+            setIcon(deleteVariableIcon);
+            //setText("Delete");
             setOpaque(true);
         }
 
@@ -128,7 +133,7 @@ public class VariablesWindow extends JFrame {
 
         public ButtonEditor(JTable table) {
             this.tableRef = table;
-            this.button = new JButton("Delete");
+            this.button = new JButton(deleteVariableIcon);
             this.button.addActionListener(this);
         }
 
