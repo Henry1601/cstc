@@ -173,9 +173,8 @@ public class VariablesWindow extends JFrame {
             setText(value == null ? "" : value.toString());
             Dimension preferredSize = getPreferredSize();
             setSize(preferredSize.width, getPreferredSize().height);
-            if (table.getRowHeight(row) != getPreferredSize().height) {
-                table.setRowHeight(row, getPreferredSize().height);
-            }
+            table.setRowHeight(30);
+            table.setRowMargin(5);
             setColumnWidth(preferredSize);
             return this;
         }
