@@ -3,11 +3,14 @@ package de.usd.cstchef.view;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -124,9 +127,9 @@ public class RecipePanel extends JPanel implements ChangeListener {
         controllerMod = new CstcMessageEditorController();
 
         // create input panel
-        JPanel inputPanel = new LayoutPanel("Input");
+        JPanel inputPanel = new JPanel(new BorderLayout());
         inputText = new BurpEditorWrapper(controllerOrig, operation, true);
-        inputPanel.add(inputText.uiComponent());
+        inputPanel.add(inputText.uiComponent(), BorderLayout.CENTER);
 
         /* 
          * This is necessary to have the distribution of space in all of the three RecipePanels uniform.
@@ -136,9 +139,9 @@ public class RecipePanel extends JPanel implements ChangeListener {
         inputPanel.setMinimumSize(new Dimension(248, 0));
 
         // create output panel
-        JPanel outputPanel = new LayoutPanel("Output");
+        JPanel outputPanel = new JPanel(new BorderLayout());
         outputText = new BurpEditorWrapper(controllerMod, operation, false);
-        outputPanel.add(outputText.uiComponent());
+        outputPanel.add(outputText.uiComponent(), BorderLayout.CENTER);
 
         outputPanel.setPreferredSize(new Dimension(248, 0));
         outputPanel.setMinimumSize(new Dimension(248, 0));
@@ -183,32 +186,28 @@ public class RecipePanel extends JPanel implements ChangeListener {
         searchTreePanel.add(btnContainer, BorderLayout.PAGE_END);
 
         // create operations panel
-        JPanel operationsPanel = new LayoutPanel("Operations");
-        operationsPanel.add(searchTreePanel);
+        JPanel operationsPanel = new JPanel(new BorderLayout());
+        operationsPanel.add(searchTreePanel, BorderLayout.CENTER);
         operationsPanel.setBackground(Color.WHITE);
-
-        operationsPanel.setPreferredSize(new Dimension(100, 0));
-        operationsPanel.setMinimumSize(new Dimension(100, 0));
 
         inOut.setTopComponent(inputPanel);
         inOut.setBottomComponent(outputPanel);
         inOut.setResizeWeight(0.5);
 
         // create active operations (middle) panel
-        LayoutPanel activeOperationsPanel = new LayoutPanel("Recipe");
+        JPanel activeOperationsPanel = new JPanel(new BorderLayout());
+        JPanel controlsPanel = new JPanel(new WrapLayout(FlowLayout.LEFT, 5, 5));
 
         inactiveWarning = new JLabel(this.operation.toString() + " Operations currently inactive!");
         inactiveWarning.setForeground(Color.RED);
         inactiveWarning.setFont(inactiveWarning.getFont().deriveFont(inactiveWarning.getFont().getStyle() | Font.BOLD));
         if(!this.operation.equals(BurpOperation.FORMAT))
-            activeOperationsPanel.addActionComponent(inactiveWarning);
+            controlsPanel.add(inactiveWarning);
 
         // add action items
         if(this.operation != BurpOperation.FORMAT)
-            activeOperationsPanel.addActionComponent(filters);
+            controlsPanel.add(filters);
         
-        activeOperationsPanel.setPreferredSize(new Dimension(393, 0));
-        activeOperationsPanel.setMinimumSize(new Dimension(393, 0));
         
         filters.addActionListener(new ActionListener() {
             @Override
@@ -242,7 +241,7 @@ public class RecipePanel extends JPanel implements ChangeListener {
         filters.setToolTipText("Hotkey: CTRL + SHIFT + F");
 
         bakeButton.setEnabled(!autoBake);
-        activeOperationsPanel.addActionComponent(bakeButton);
+        controlsPanel.add(bakeButton);
         bakeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
@@ -251,7 +250,7 @@ public class RecipePanel extends JPanel implements ChangeListener {
         });
 
         JButton saveButton = new JButton("Save to File");
-        activeOperationsPanel.addActionComponent(saveButton);
+        controlsPanel.add(saveButton);
         saveButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
@@ -274,7 +273,7 @@ public class RecipePanel extends JPanel implements ChangeListener {
         });
 
         JButton loadButton = new JButton("Load");
-        activeOperationsPanel.addActionComponent(loadButton);
+        controlsPanel.add(loadButton);
         loadButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
@@ -298,7 +297,7 @@ public class RecipePanel extends JPanel implements ChangeListener {
         autoBakeInterval.setPreferredSize(new Dimension(100, 22));
         autoBakeInterval.setMaximumSize(new Dimension(100, 22));
         autoBakeInterval.setToolTipText("Auto bake interval in milliseconds.\nMin: 500ms Max: 900,000ms (= 15min)");
-        activeOperationsPanel.addActionComponent(autoBakeInterval);
+        controlsPanel.add(autoBakeInterval);
         autoBakeInterval.addChangeListener(new ChangeListener() {
 
             @Override
@@ -309,7 +308,7 @@ public class RecipePanel extends JPanel implements ChangeListener {
         });
 
         bakeCheckBox.setSelected(this.autoBake);
-        activeOperationsPanel.addActionComponent(bakeCheckBox);
+        controlsPanel.add(bakeCheckBox);
         bakeCheckBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -320,10 +319,10 @@ public class RecipePanel extends JPanel implements ChangeListener {
         });
 
         contentLengthCheckbox.setSelected(true);
-        activeOperationsPanel.addActionComponent(contentLengthCheckbox);
+        controlsPanel.add(contentLengthCheckbox);
 
         JButton variablesButton = new JButton("Variables");
-        activeOperationsPanel.addActionComponent(variablesButton);
+        controlsPanel.add(variablesButton);
         variablesButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
@@ -334,7 +333,7 @@ public class RecipePanel extends JPanel implements ChangeListener {
         });
 
         JButton clearButton = new JButton("Clear");
-        activeOperationsPanel.addActionComponent(clearButton);
+        controlsPanel.add(clearButton);
         clearButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
@@ -362,7 +361,12 @@ public class RecipePanel extends JPanel implements ChangeListener {
 
         JScrollPane activeOperationsScrollPane = new JScrollPane(operationLines, JScrollPane.VERTICAL_SCROLLBAR_NEVER,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        activeOperationsPanel.add(activeOperationsScrollPane);
+
+
+        controlsPanel.setMinimumSize(new Dimension(100, 0));
+
+        activeOperationsPanel.add(controlsPanel, BorderLayout.NORTH);
+        activeOperationsPanel.add(activeOperationsScrollPane, BorderLayout.CENTER);
 
         // button to add lanes
         addLaneButton.setIcon(plusIcon);
@@ -944,4 +948,86 @@ public class RecipePanel extends JPanel implements ChangeListener {
         return -2;
     }
 
+}
+
+
+/**
+ * WrapLayout — a FlowLayout that supports wrapping and correctly reports preferred/minimum sizes
+ * (based on Rob Camick's WrapLayout)
+ */
+class WrapLayout extends FlowLayout {
+    public WrapLayout() {
+        super();
+    }
+    public WrapLayout(int align) {
+        super(align);
+    }
+    public WrapLayout(int align, int hgap, int vgap) {
+        super(align, hgap, vgap);
+    }
+
+    @Override
+    public Dimension preferredLayoutSize(Container target) {
+        return layoutSize(target, false);
+    }
+
+    @Override
+    public Dimension minimumLayoutSize(Container target) {
+        return layoutSize(target, true);
+    }
+
+    private Dimension layoutSize(Container target, boolean minimum) {
+        synchronized (target.getTreeLock()) {
+            int targetWidth = target.getSize().width;
+            if (targetWidth <= 0) {
+                // use a very large width so components are put in a single row
+                targetWidth = Integer.MAX_VALUE;
+            }
+            Insets insets = target.getInsets();
+            int hgap = getHgap();
+            int vgap = getVgap();
+            int maxWidth = targetWidth - (insets.left + insets.right + hgap * 2);
+
+            Dimension dim = new Dimension(0, 0);
+            int rowWidth = 0;
+            int rowHeight = 0;
+
+            int nmembers = target.getComponentCount();
+            for (int i = 0; i < nmembers; i++) {
+                Component m = target.getComponent(i);
+                if (!m.isVisible()) {
+                    continue;
+                }
+                Dimension d = minimum ? m.getMinimumSize() : m.getPreferredSize();
+                if (rowWidth + d.width > maxWidth) {
+                    // new row
+                    addRow(dim, rowWidth, rowHeight, vgap);
+                    rowWidth = 0;
+                    rowHeight = 0;
+                }
+                if (rowWidth != 0) {
+                    rowWidth += hgap;
+                }
+                rowWidth += d.width;
+                rowHeight = Math.max(rowHeight, d.height);
+            }
+            // last row
+            addRow(dim, rowWidth, rowHeight, vgap);
+
+            dim.width += insets.left + insets.right + hgap * 2;
+            dim.height += insets.top + insets.bottom + vgap * 2;
+
+            return dim;
+        }
+    }
+
+    private void addRow(Dimension dim, int rowWidth, int rowHeight, int vgap) {
+        if (rowWidth > 0) {
+            dim.width = Math.max(dim.width, rowWidth);
+            if (dim.height > 0) {
+                dim.height += vgap;
+            }
+            dim.height += rowHeight;
+        }
+    }
 }
