@@ -220,4 +220,10 @@ public class BurpEditorWrapper implements HttpRequestEditor, HttpResponseEditor,
         }
         return null;
     }
+
+    @Override
+    public void setCaretPosition(int arg0) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setCaretPosition'");
+    }
 }
