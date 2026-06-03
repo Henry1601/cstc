@@ -91,7 +91,7 @@ public class CstcContextMenuItemsProvider implements ContextMenuItemsProvider {
         JTabbedPane parentTabbedPane = (JTabbedPane) BurpUtils.getInstance().getView().getParent();
         for(int i = 0; i < parentTabbedPane.getTabCount(); i++) {
             if(parentTabbedPane.getTitleAt(i).contains("CSTC")) {
-                parentTabbedPane.setBackgroundAt(i, new Color(0xff6633));
+                parentTabbedPane.setForegroundAt(i, new Color(0xff6633));
                 timer.schedule(task, 3000);
                 return;
             }
@@ -102,7 +102,7 @@ public class CstcContextMenuItemsProvider implements ContextMenuItemsProvider {
         JTabbedPane parentTabbedPane = (JTabbedPane) BurpUtils.getInstance().getView().getParent();
         for(int i = 0; i < parentTabbedPane.getTabCount(); i++) {
             if(parentTabbedPane.getTitleAt(i).contains("CSTC")) {
-                parentTabbedPane.setBackgroundAt(i, new Color(0x000000));
+                parentTabbedPane.setForegroundAt(i, new Color(0x000000));
                 return;
             }
         }
