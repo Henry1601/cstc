@@ -64,6 +64,9 @@ import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.http.message.responses.HttpResponse;
 import burp.api.montoya.persistence.PersistedObject;
+import burp.api.montoya.ui.hotkey.HotKey;
+import burp.api.montoya.ui.hotkey.HotKeyContext;
+import burp.api.montoya.ui.hotkey.HotKeyHandler;
 import de.usd.cstchef.Utils.MessageType;
 import de.usd.cstchef.VariableStore;
 import de.usd.cstchef.operations.Operation;
@@ -224,21 +227,10 @@ public class RecipePanel extends JPanel implements ChangeListener {
             }
         });
 
-        KeyStroke keyStroke = KeyStroke.getKeyStroke("ctrl shift F");
-        this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, "clickFilter");
-
-        this.getActionMap().put("clickFilter", new AbstractAction() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(operation != BurpOperation.FORMAT) {
-                    filters.doClick();
-                }
-            }
-            
-        });
-
-        filters.setToolTipText("Hotkey: CTRL + SHIFT + F");
+        HotKey hotKey = HotKey.hotKey("Open Filter Dialog", "Ctrl+Shift+F");
+        HotKeyHandler handler = event -> filters.doClick();
+        BurpUtils.getInstance().getApi().userInterface().registerHotKeyHandler(hotKey, handler);
+        filters.setToolTipText("Hotkey from within a message editor: Ctrl + Shift + F");
 
         bakeButton.setEnabled(!autoBake);
         controlsPanel.add(bakeButton);
