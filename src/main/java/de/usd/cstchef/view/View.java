@@ -1,9 +1,12 @@
 package de.usd.cstchef.view;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.security.Security;
 
 import javax.swing.JFrame;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.WindowConstants;
@@ -13,12 +16,16 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import burp.BurpUtils;
 import de.usd.cstchef.view.filter.FilterState;
 import de.usd.cstchef.view.filter.FilterState.BurpOperation;
+import de.usd.cstchef.view.ui.NotificationMenu;
 
 public class View extends JPanel {
 
     private RecipePanel incomingRecipePanel;
     private RecipePanel outgoingRecipePanel;
     private RecipePanel formatRecipePanel;
+
+    private NotificationMenu cstcMenu = new NotificationMenu("CSTC", false);
+    private Color defaultMenuForeground;
 
     public View(){
         this(new FilterState());
@@ -38,6 +45,16 @@ public class View extends JPanel {
         tabbedPane.addTab("Incoming Responses", null, incomingRecipePanel, "Responses from the server.");
         tabbedPane.addTab("Formatting", null, formatRecipePanel, "Formatting for messages.");
         this.add(tabbedPane);
+
+        Object[] options = { "Close" };
+        JMenuItem openFilterDialogItem = new JMenuItem("Filter Dialog");
+        openFilterDialogItem.addActionListener(e -> JOptionPane.showOptionDialog(null, RequestFilterDialog.getInstance(), "Request Filter",
+                        JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]));
+
+        cstcMenu.add(openFilterDialogItem);
+        defaultMenuForeground = cstcMenu.getForeground();
+
+        BurpUtils.getInstance().getApi().userInterface().menuBar().registerMenu(cstcMenu);
     }
 
     public RecipePanel getIncomingRecipePanel() {
@@ -65,16 +82,26 @@ public class View extends JPanel {
 
     public void updateInactiveWarnings() {
         incomingRecipePanel.showInactiveWarning();
+        boolean filterActive = false;
+
         for(Boolean b : BurpUtils.getInstance().getFilterState().getIncomingFilterSettings().values()){
-            if(b == true)
+            if(b == true) {
                 incomingRecipePanel.hideInactiveWarning();
+                filterActive = true;
+            }
         }
 
         outgoingRecipePanel.showInactiveWarning();
         for(Boolean b : BurpUtils.getInstance().getFilterState().getOutgoingFilterSettings().values()){
-            if(b == true)
+            if(b == true) {
                 outgoingRecipePanel.hideInactiveWarning();
+                filterActive = true;
+            }
         }
+
+        cstcMenu.setText("CSTC");
+        cstcMenu.setNotificationVisible(filterActive);
+        cstcMenu.setForeground(filterActive ? new Color(0xff6633) : defaultMenuForeground);
     }
 
     public void preventRaceConditionOnVariables() {
