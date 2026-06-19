@@ -25,14 +25,13 @@ import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -40,7 +39,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
-import javax.swing.KeyStroke;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
@@ -65,7 +63,6 @@ import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.http.message.responses.HttpResponse;
 import burp.api.montoya.persistence.PersistedObject;
 import burp.api.montoya.ui.hotkey.HotKey;
-import burp.api.montoya.ui.hotkey.HotKeyContext;
 import burp.api.montoya.ui.hotkey.HotKeyHandler;
 import de.usd.cstchef.Utils.MessageType;
 import de.usd.cstchef.VariableStore;
@@ -80,7 +77,9 @@ public class RecipePanel extends JPanel implements ChangeListener {
     private boolean autoBake = true;
     private int bakeThreshold = 400;
     private String recipeName;
+    private String persistenceId;
     private BurpOperation operation;
+    private MessageType messageType;
 
     private BurpEditorWrapper inputText;
     private BurpEditorWrapper outputText;
@@ -115,10 +114,24 @@ public class RecipePanel extends JPanel implements ChangeListener {
 
     private GridBagConstraints recipeStepPanelConstraints;
 
-    public RecipePanel(BurpOperation operation) {
+    public RecipePanel(BurpOperation operation, String recipeName) {
+        this(operation, recipeName, UUID.randomUUID().toString());
+    }
+
+    public RecipePanel(BurpOperation operation, String recipeName, String persistenceId) {
 
         this.operation = operation;
-        this.recipeName = operation.toString();
+        this.recipeName = recipeName;
+        this.persistenceId = persistenceId;
+
+        switch(this.operation) {
+            case OUTGOING:
+                this.messageType = MessageType.REQUEST;
+            case INCOMING:
+                this.messageType = MessageType.REQUEST;
+            case FORMAT:
+                this.messageType = MessageType.RAW;
+        }
 
         ToolTipManager tooltipManager = ToolTipManager.sharedInstance();
         tooltipManager.setInitialDelay(0);
@@ -428,40 +441,56 @@ public class RecipePanel extends JPanel implements ChangeListener {
         startAutoBakeTimer(1000);
     }
 
+    public BurpOperation getOperation() {
+        return this.operation;
+    }
+
+    public String getPersistenceId() {
+        return this.persistenceId;
+    }
+
+    public String getPersistedInputKey() {
+        return this.persistenceId + "-Input";
+    }
+
+    public String getPersistedRecipeKey() {
+        return this.persistenceId + "-Recipe";
+    }
+
+    public String getRecipeName() {
+        return this.recipeName;
+    }
+
+    public void setRecipeName(String name) {
+        BurpUtils.getInstance().getFilterState().renameRecipePanel(this.recipeName, name, this.operation);
+        this.recipeName = name;
+        RequestFilterDialog.getInstance().updateFilterSettings();
+        BurpUtils.getInstance().getView().updateInactiveWarnings();
+    }
+
     public void disableAutobakeIfFilterActive() {
-        for(Boolean b : BurpUtils.getInstance().getFilterState().getIncomingFilterSettings().values()) {
-            if(b) {
-                this.autoBake = false;
-                this.bakeCheckBox.setSelected(false);
-                this.bakeButton.setEnabled(true);
-                this.bakeCheckBox.setEnabled(false);
-                this.bakeCheckBox.setToolTipText("Auto bake is disabled if Filter is active.");
-                this.autoBakeInterval.setEnabled(false);
-                return;
-            }
-            else if(!this.bakeCheckBox.isEnabled() && !b) {
-                this.bakeCheckBox.setEnabled(true);
-                this.bakeCheckBox.setToolTipText("");
-                this.autoBakeInterval.setEnabled(true);
-            }
+        if(BurpUtils.getInstance().getFilterState().hasActiveFilters(BurpOperation.OUTGOING) || BurpUtils.getInstance().getFilterState().hasActiveFilters(BurpOperation.INCOMING)) {
+            disableAutobake();
+            
+            return;
         }
 
-        for(Boolean b : BurpUtils.getInstance().getFilterState().getOutgoingFilterSettings().values()) {
-            if(b) {
-                this.autoBake = false;
-                this.bakeCheckBox.setSelected(false);
-                this.bakeButton.setEnabled(true);
-                this.bakeCheckBox.setEnabled(false);
-                this.bakeCheckBox.setToolTipText("Auto bake is disabled if Filter is active.");
-                this.autoBakeInterval.setEnabled(false);
-                return;
-            }
-            else if(!this.bakeCheckBox.isEnabled() && !b) {
-                this.bakeCheckBox.setEnabled(true);
-                this.bakeCheckBox.setToolTipText("");
-                this.autoBakeInterval.setEnabled(true);
-            }
-        }
+        enableAutobake();
+    }
+
+    public void disableAutobake() {
+        this.autoBake = false;
+        this.bakeCheckBox.setSelected(false);
+        this.bakeButton.setEnabled(true);
+        this.bakeCheckBox.setEnabled(false);
+        this.bakeCheckBox.setToolTipText("Auto bake is disabled if Filter is active.");
+        this.autoBakeInterval.setEnabled(false);
+    }
+
+    public void enableAutobake() {
+        this.bakeCheckBox.setEnabled(true);
+        this.bakeCheckBox.setToolTipText("");
+        this.autoBakeInterval.setEnabled(true);
     }
 
     public void insertLaneAt(int index) {
@@ -846,7 +875,7 @@ public class RecipePanel extends JPanel implements ChangeListener {
     private void saveRecipe() {
         PersistedObject savedState = BurpUtils.getInstance().getApi().persistence().extensionData();
         try {
-            savedState.setString(this.operation + "Recipe", getStateAsJSON());
+            savedState.setString(getPersistedRecipeKey(), getStateAsJSON());
         } catch (IOException e) {
             Logger.getInstance().err(
                     "Could not save recipes to the Burp project. If you are running Burp Suite Community Edition, this behavior is expected since saving project files is exclusive to BurpSuite Pro users.");
@@ -922,10 +951,6 @@ public class RecipePanel extends JPanel implements ChangeListener {
         else {
             return false;
         }
-    }
-
-    public BurpOperation getOperation() {
-        return this.operation;
     }
 
     public int getIndexOf(RecipeStepPanel recipeStepPanel) {

@@ -36,7 +36,7 @@ public class MyExtensionProvidedHttpRequestEditor implements ExtensionProvidedHt
     @Override
     public void setRequestResponse(HttpRequestResponse requestResponse)
     {
-        ByteArray result = view.getOutgoingRecipePanel().bake(requestResponse.request().toByteArray(), requestResponse.request().toByteArray());
+        ByteArray result = view.getRecipePanelAtIndex(0).bake(requestResponse.request().toByteArray(), requestResponse.request().toByteArray());
         this.requestEditor.setContents(result);
     }
 
