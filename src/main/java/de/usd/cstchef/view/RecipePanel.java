@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -67,6 +68,8 @@ import burp.api.montoya.ui.hotkey.HotKeyHandler;
 import de.usd.cstchef.Utils.MessageType;
 import de.usd.cstchef.VariableStore;
 import de.usd.cstchef.operations.Operation;
+import de.usd.cstchef.operations.dataformat.JsonBeautifier;
+import de.usd.cstchef.operations.setter.HttpJsonSetter;
 import de.usd.cstchef.view.filter.FilterState.BurpOperation;
 import de.usd.cstchef.view.ui.PlaceholderTextField;
 import de.usd.cstchef.view.ui.TextChangedListener;
@@ -113,6 +116,8 @@ public class RecipePanel extends JPanel implements ChangeListener {
     private JCheckBox contentLengthCheckbox = new JCheckBox("Update Content-Length");
 
     private GridBagConstraints recipeStepPanelConstraints;
+
+    private boolean initializingDefaultExample;
 
     public RecipePanel(BurpOperation operation, String recipeName) {
         this(operation, recipeName, UUID.randomUUID().toString());
@@ -439,6 +444,117 @@ public class RecipePanel extends JPanel implements ChangeListener {
         operationsTree.addMouseMotionListener(dma);
 
         startAutoBakeTimer(1000);
+        initializeDefaultExample();
+    }
+
+    private void initializeDefaultExample() {
+        if (!isDefaultRecipePanel()) {
+            return;
+        }
+
+        try {
+            this.initializingDefaultExample = true;
+            clear();
+
+            switch (this.operation) {
+                case OUTGOING:
+                    populateOutgoingExample();
+                    break;
+                case INCOMING:
+                    populateIncomingExample();
+                    break;
+                case FORMAT:
+                    populateFormattingExample();
+                    break;
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            Logger.getInstance().err("Could not initialize example content for '" + this.recipeName + "': " + e.getMessage());
+        } finally {
+            this.initializingDefaultExample = false;
+        }
+
+        bake(false);
+    }
+
+    private boolean isDefaultRecipePanel() {
+        return (this.operation == BurpOperation.OUTGOING && "Outgoing Requests".equals(this.recipeName))
+                || (this.operation == BurpOperation.INCOMING && "Incoming Responses".equals(this.recipeName))
+                || (this.operation == BurpOperation.FORMAT && "Formatting".equals(this.recipeName));
+    }
+
+    private void populateOutgoingExample() {
+        inputText.setRequest(HttpRequest.httpRequest(ByteArray.byteArray(getOutgoingExampleRequest())));
+
+        RecipeStepPanel lane = (RecipeStepPanel) this.operationLines.getComponent(0);
+        configureJsonSetterLane(lane,
+                "Promote request role",
+                "Example: change a JSON field in an outgoing request before it is sent.",
+                "role",
+                "admin",
+                "Sets the JSON parameter 'role' from 'user' to 'admin'.");
+    }
+
+    private void populateIncomingExample() {
+        inputText.setResponse(HttpResponse.httpResponse(ByteArray.byteArray(getIncomingExampleResponse())));
+
+        RecipeStepPanel lane = (RecipeStepPanel) this.operationLines.getComponent(0);
+        configureJsonSetterLane(lane,
+                "Patch response JSON",
+                "Example: modify a JSON value in an incoming response before forwarding it.",
+                "role",
+                "admin",
+                "Changes the JSON parameter 'role' from 'user' to 'admin'.");
+    }
+
+    private void populateFormattingExample() {
+        inputText.setContents(ByteArray.byteArray(getFormattingExampleInput()));
+
+        RecipeStepPanel lane = (RecipeStepPanel) this.operationLines.getComponent(0);
+        lane.setTitle("Beautify JSON");
+        lane.setComment("Example: turn compact JSON into a readable, indented structure.");
+
+        JsonBeautifier operation = new JsonBeautifier();
+        operation.setComment("Formats the sample JSON payload for easier review.");
+        lane.addComponent(operation, 0);
+    }
+
+    private void configureJsonSetterLane(RecipeStepPanel lane, String laneTitle, String laneComment, String key,
+            String value, String operationComment) {
+        lane.setTitle(laneTitle);
+        lane.setComment(laneComment);
+
+        HttpJsonSetter operation = new HttpJsonSetter();
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("Key", key);
+        parameters.put("Value", value);
+        parameters.put("checkbox1", true);
+        parameters.put("textbox1", "");
+        operation.load(parameters);
+        operation.setComment(operationComment);
+        lane.addComponent(operation, 0);
+    }
+
+    private String getOutgoingExampleRequest() {
+        return String.join("\r\n",
+                "POST /api/session HTTP/1.1",
+                "Host: demo.cstc.local",
+                "Content-Type: application/json",
+                "",
+                "{\"username\":\"alice\",\"role\":\"user\"}");
+    }
+
+    private String getIncomingExampleResponse() {
+        return String.join("\r\n",
+                "HTTP/1.1 200 OK",
+                "Content-Type: application/json",
+                "",
+                "{\"status\":\"ok\",\"role\":\"user\",\"featureFlags\":{\"beta\":false}}");
+    }
+
+    private String getFormattingExampleInput() {
+        return "{\"event\":\"login\",\"details\":{\"user\":\"alice\",\"roles\":[\"user\"],\"success\":true}}";
     }
 
     public BurpOperation getOperation() {
@@ -920,6 +1036,10 @@ public class RecipePanel extends JPanel implements ChangeListener {
 
     @Override
     public void stateChanged(ChangeEvent e) {
+        if (this.initializingDefaultExample) {
+            return;
+        }
+
         this.autoBake();
 
         if (!BurpUtils.getInstance().getApi().burpSuite().version().edition().equals(BurpSuiteEdition.COMMUNITY_EDITION)) {

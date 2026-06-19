@@ -68,6 +68,11 @@ public class BurpExtender implements BurpExtension {
                     BurpOperation operation = recipePanel.getOperation();
                     recipe = persistence.getString(operation + "-Recipe");
                 }
+
+                if (recipe == null) {
+                    continue;
+                }
+
                 recipePanel.restoreState(recipe);
             }
         } catch (Exception e) {
