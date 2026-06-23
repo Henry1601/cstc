@@ -1,5 +1,6 @@
 package burp;
 
+import burp.api.montoya.core.Annotations;
 import burp.api.montoya.core.ByteArray;
 import burp.api.montoya.http.handler.HttpHandler;
 import burp.api.montoya.http.handler.HttpRequestToBeSent;
@@ -8,12 +9,13 @@ import burp.api.montoya.http.handler.RequestToBeSentAction;
 import burp.api.montoya.http.handler.ResponseReceivedAction;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.http.message.responses.HttpResponse;
-import de.usd.cstchef.Utils.MessageType;
 import de.usd.cstchef.view.View;
 import de.usd.cstchef.view.filter.FilterState;
 
 import static burp.api.montoya.http.handler.RequestToBeSentAction.continueWith;
 import static burp.api.montoya.http.handler.ResponseReceivedAction.continueWith;
+
+import static burp.api.montoya.core.ToolType.EXTENSIONS;
 
 public class CstcHttpHandler implements HttpHandler {
 
@@ -25,9 +27,15 @@ public class CstcHttpHandler implements HttpHandler {
 
     @Override
     public RequestToBeSentAction handleHttpRequestToBeSent(HttpRequestToBeSent requestToBeSent) {
+        if(requestToBeSent.toolSource().isFromTool(EXTENSIONS) && requestToBeSent.hasHeader("X-CSTC-79301f837932346cb067c568e27369bf")) {
+            HttpRequest request = requestToBeSent.withRemovedHeader("X-CSTC-79301f837932346cb067c568e27369bf");
+            return continueWith(request, Annotations.annotations("CSTC"));
+        }
+
         if (BurpUtils.getInstance().getFilterState().shouldProcess(FilterState.BurpOperation.OUTGOING_HTTP_REQUEST, requestToBeSent.toolSource().toolType())) {
+
             ByteArray request = requestToBeSent.toByteArray();
-            ByteArray modifiedRequest = view.getOutgoingHttpRequestRecipePanel().bake(request, MessageType.REQUEST);
+            ByteArray modifiedRequest = view.getOutgoingHttpRequestRecipePanel().bake(request, null);
             return continueWith(HttpRequest.httpRequest(modifiedRequest).withService(requestToBeSent.httpService()));
         }
         else{
@@ -38,8 +46,11 @@ public class CstcHttpHandler implements HttpHandler {
     @Override
     public ResponseReceivedAction handleHttpResponseReceived(HttpResponseReceived responseReceived) {
         if (BurpUtils.getInstance().getFilterState().shouldProcess(FilterState.BurpOperation.INCOMING_HTTP_RESPONSE, responseReceived.toolSource().toolType())) {
+            if(responseReceived.annotations().hasNotes() && responseReceived.annotations().notes().equals("CSTC")) {
+                return continueWith(responseReceived);
+            }
             ByteArray response = responseReceived.toByteArray();
-            ByteArray modifiedResponse = view.getIncomingHttpResponseRecipePanel().bake(response, MessageType.RESPONSE);
+            ByteArray modifiedResponse = view.getIncomingHttpResponseRecipePanel().bake(response, responseReceived.initiatingRequest().toByteArray());
             return continueWith(HttpResponse.httpResponse(modifiedResponse));
         }
         else{

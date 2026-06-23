@@ -11,7 +11,6 @@ import javax.swing.WindowConstants;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import burp.BurpUtils;
-import de.usd.cstchef.Utils.MessageType;
 import de.usd.cstchef.view.filter.FilterState;
 import de.usd.cstchef.view.filter.FilterState.BurpOperation;
 
@@ -33,11 +32,11 @@ public class View extends JPanel {
         this.setLayout(new BorderLayout());
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        incomingHttpResponseRecipePanel = new RecipePanel(BurpOperation.INCOMING_HTTP_RESPONSE, MessageType.RESPONSE);
-        incomingProxyRequestRecipePanel = new RecipePanel(BurpOperation.INCOMING_PROXY_REQUEST, MessageType.REQUEST);
-        outgoingHttpRequestRecipePanel = new RecipePanel(BurpOperation.OUTGOING_HTTP_REQUEST, MessageType.REQUEST);
-        outgoingProxyResponseRecipePanel = new RecipePanel(BurpOperation.OUTGOING_PROXY_RESPONSE, MessageType.RESPONSE);
-        formatRecipePanel = new RecipePanel(BurpOperation.FORMAT, MessageType.RAW);
+        incomingHttpResponseRecipePanel = new RecipePanel(BurpOperation.INCOMING_HTTP_RESPONSE);
+        incomingProxyRequestRecipePanel = new RecipePanel(BurpOperation.INCOMING_PROXY_REQUEST);
+        outgoingHttpRequestRecipePanel = new RecipePanel(BurpOperation.OUTGOING_HTTP_REQUEST);
+        outgoingProxyResponseRecipePanel = new RecipePanel(BurpOperation.OUTGOING_PROXY_RESPONSE);
+        formatRecipePanel = new RecipePanel(BurpOperation.FORMAT);
 
         tabbedPane.addTab("Incoming Proxy Requests", null, incomingProxyRequestRecipePanel, "Incoming requests from the client application.");
         tabbedPane.addTab("Outgoing HTTP Requests", null, outgoingHttpRequestRecipePanel, "Outgoing requests from any tool of Burp.");

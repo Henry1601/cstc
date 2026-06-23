@@ -6,6 +6,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.3.6] - 2025-08-21
+
+### Added 
+* Add Stop Operation
+* Add Jump Operation
+* Add To Decimal Operation
+* Add From Decimal Operation
+* Add RequestToResponse Operation
+* Add default extension to saving a recipe
+* Add UI element to make auto bake interval user changeable
+* Add PEM format to RSA operations
+* Add hotkey to open Filter dialog (CTRL + SHIFT + F)
+* Add verbose description to DateTime Operation
+* Add new YouTube tutorial to README
+
+
+### Changed
+* Save Recipe Panel's input to Burp state
+* Refactor Filter dialog UI and logic
+* Select "Find anywhere" of Regex Match by default
+* Add Focus Listener to CSTC Formatting tab to always apply current recipe
+
+### Fixed  
+* Fix editing of a lane title throws an exception
+
+
+## [1.3.5] - 2025-03-17
+
+### Added
+
+* Add Remove HTTP Header Operation
+
+### Changed
+
+* Refactor Send Plain Request Operation
+* Refactor Request Builder Operation to allow all HTTP verbs
+* Refactor Set HTTP Cookie Operation
+* Refactor HTTP Cookie Extractor Operation
+* Refactor HTML Encode Operation
+* Refactor HTML Decode Operation
+* Refactor HTTP Body Extractor Operation
+* Refactor Substring Operation
+* Change Recipe Panel to bake empty input
+* Change multiple operations to handle empty input
+* Change context menu items to not bake recipes when selected
+* Refactor Operations Tree to be the same for all Recipe Panel
+* Change operations perform method to parse the message type of its input
+* Add checkbox to Write File Operation to make the new line optional
+
+### Fixed 
+
+* Fix several issues in relation of missing JSON fields in dated recipes
+* Fix recipes being applied again on requests originating from the recipe itself (analog with responses) 
+* Fix Request Builder Operation to add trailing line breaks 
+* Fix logic error in JWT Sign Operation 
+* Fix operations output Null Byte if an exception is thrown
+
+
 ## [1.3.4] - 2024-11-01
 
 ### Added

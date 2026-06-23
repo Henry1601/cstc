@@ -79,7 +79,6 @@ public class FilterState implements Serializable{
 
     public boolean shouldProcess(BurpOperation operation, ToolType toolType) {
         LinkedHashMap<Filter, Boolean> filterSettings;
-        int filterMask = 0;
         switch (operation) {
             case INCOMING_HTTP_RESPONSE:
                 filterSettings = incomingHttpResponseFilterSettings;
@@ -100,7 +99,7 @@ public class FilterState implements Serializable{
 
         for (Map.Entry<Filter, Boolean> entry : filterSettings.entrySet()) {
             Filter filter = entry.getKey();
-            if(filter.getToolType().equals(toolType)){
+            if(filter.getToolType() == toolType){
                 return entry.getValue() == true;
             }
         }

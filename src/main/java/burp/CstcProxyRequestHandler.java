@@ -7,7 +7,6 @@ import burp.api.montoya.proxy.http.InterceptedRequest;
 import burp.api.montoya.proxy.http.ProxyRequestHandler;
 import burp.api.montoya.proxy.http.ProxyRequestReceivedAction;
 import burp.api.montoya.proxy.http.ProxyRequestToBeSentAction;
-import de.usd.cstchef.Utils.MessageType;
 import de.usd.cstchef.view.View;
 import de.usd.cstchef.view.filter.FilterState;
 
@@ -25,7 +24,7 @@ public class CstcProxyRequestHandler implements ProxyRequestHandler {
     public ProxyRequestReceivedAction handleRequestReceived(InterceptedRequest interceptedRequest) {
         if (BurpUtils.getInstance().getFilterState().shouldProcess(FilterState.BurpOperation.INCOMING_PROXY_REQUEST, ToolType.PROXY)) {
             ByteArray request = interceptedRequest.toByteArray();
-            ByteArray modifiedRequest = view.getIncomingProxyRequestRecipePanel().bake(request, MessageType.REQUEST);
+            ByteArray modifiedRequest = view.getIncomingProxyRequestRecipePanel().bake(request, null);
             return continueWith(HttpRequest.httpRequest(modifiedRequest).withService(interceptedRequest.httpService()));
         }
         else{
@@ -37,5 +36,4 @@ public class CstcProxyRequestHandler implements ProxyRequestHandler {
     public ProxyRequestToBeSentAction handleRequestToBeSent(InterceptedRequest interceptedRequest) {
         return ProxyRequestToBeSentAction.continueWith(interceptedRequest);
     }
-    
 }

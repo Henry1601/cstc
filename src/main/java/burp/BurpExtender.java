@@ -33,10 +33,24 @@ public class BurpExtender implements BurpExtension {
 
         if (!api.burpSuite().version().edition().equals(BurpSuiteEdition.COMMUNITY_EDITION)) {
             PersistedObject persistence = api.persistence().extensionData();
-            restoreFilterState(persistence);
+            restoreInput(persistence);
             restoreRecipe(persistence);
+            restoreFilterState(persistence);
         }
         view.updateInactiveWarnings();
+    }
+
+    private void restoreInput(PersistedObject persistence) {
+        try {
+            this.view.getFormatRecipePanel().restoreInput(persistence.getString(BurpOperation.FORMAT + "Input"));
+            this.view.getIncomingProxyRequestRecipePanel().restoreInput(persistence.getString(BurpOperation.INCOMING_PROXY_REQUEST + "Input"));
+            this.view.getOutgoingHttpRequestRecipePanel().restoreInput(persistence.getString(BurpOperation.OUTGOING_HTTP_REQUEST + "Input"));
+            this.view.getIncomingHttpResponseRecipePanel().restoreInput(persistence.getString(BurpOperation.INCOMING_HTTP_RESPONSE + "Input"));
+            this.view.getOutgoingProxyResponseRecipePanel().restoreInput(persistence.getString(BurpOperation.OUTGOING_PROXY_RESPONSE + "Input"));
+        } catch (Exception e) {
+            Logger.getInstance().log(
+                    "Could not restore the input for one or multiple panels. If this is the first time using CSTC in a project, you can ignore this message.");
+        }
     }
 
     private void restoreRecipe(PersistedObject persistence) {
@@ -59,7 +73,7 @@ public class BurpExtender implements BurpExtension {
             view.preventRaceConditionOnVariables();
         } catch (Exception e) {
             Logger.getInstance().log(
-                    "Could not restore the filter state. If this is the first time using CSTC in a project, you can ignore this message. " + e.getMessage());
+                    "Could not restore the filter state. If this is the first time using CSTC in a project, you can ignore this message. ");
         }
     }
 }
