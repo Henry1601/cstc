@@ -641,7 +641,7 @@ public class RecipePanel extends JPanel implements ChangeListener {
                 op.load(parameters);
 
                 if(operationNode.get("is_enabled") != null) {
-                op.setDisabled(!operationNode.get("is_enabled").asBoolean());
+                    op.setDisabled(!operationNode.get("is_enabled").asBoolean());
                 }
 
                 // check if "comment" attribute is set (since 1.3.2)
@@ -768,8 +768,8 @@ public class RecipePanel extends JPanel implements ChangeListener {
             }
         }
 
-                return result;
-            }
+        return result;
+    }
 
     private void bake(boolean spamProtection) {
         if (this.bakeTimer != null) {
