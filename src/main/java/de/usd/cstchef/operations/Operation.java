@@ -325,8 +325,13 @@ public abstract class Operation extends JPanel {
     private JButton createIconButton(ImageIcon icon) {
         JButton btn = new JButton();
         btn.setBorder(BorderFactory.createEmptyBorder());
+        btn.setBorderPainted(false);
         btn.setIcon(icon);
         btn.setContentAreaFilled(false);
+        btn.setFocusPainted(false);
+        btn.setFocusable(false);
+        btn.setOpaque(false);
+        btn.setRolloverEnabled(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
