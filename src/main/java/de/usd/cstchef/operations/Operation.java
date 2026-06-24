@@ -213,9 +213,11 @@ public abstract class Operation extends JPanel {
     public void triggerRemove() {
         Container parent = getParent();
         onRemove();
-        parent.remove(this);
-        parent.validate();
-        parent.repaint();
+        if (parent != null) {
+            parent.remove(this);
+            parent.revalidate();
+            parent.repaint();
+        }
         notifyChange();
     }
 
@@ -229,7 +231,8 @@ public abstract class Operation extends JPanel {
 
     public void updateStepPanel() {
         if(this.lane != null) {
-            this.lane.updateUI();
+            this.lane.refreshOperationsView();
+            notifyChange();
         }
     }
 

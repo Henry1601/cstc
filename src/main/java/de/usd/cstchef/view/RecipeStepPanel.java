@@ -132,28 +132,33 @@ public class RecipeStepPanel extends JPanel {
 
     public void addComponent(Component comp, int index) {
         operationsLine.add(comp, addContraints, index);
-        operationsLine.revalidate();
-        operationsLine.repaint();
+        refreshOperationsView();
         if (comp instanceof Operation) {
             ((Operation) comp).setRecipeStepPanel(this);
             ((Operation) comp).setChangeListener(this.changeListener);
-            this.changeListener.stateChanged(new ChangeEvent(this));
+            fireChangeEvent();
         }
     }
 
+    @Override
     public void updateUI() {
+        super.updateUI();
         if(operationsLine != null) {
+            refreshOperationsView();
+        }
+    }
+
+    public void refreshOperationsView() {
+        if (operationsLine != null) {
             operationsLine.revalidate();
             operationsLine.repaint();
-            this.changeListener.stateChanged(new ChangeEvent(this));
         }
     }
 
     public void removeComponent(Component comp) {
         operationsLine.remove(comp);
-        operationsLine.revalidate();
-        operationsLine.repaint();
-        this.changeListener.stateChanged(new ChangeEvent(this));
+        refreshOperationsView();
+        fireChangeEvent();
     }
 
     public JPanel getOperationsPanel() {
@@ -181,12 +186,11 @@ public class RecipeStepPanel extends JPanel {
 			if (!(op instanceof Operation)) {
 				continue;
 			}
-			//operationsLine.remove(op);
-            ((Operation)op).triggerRemove();
+			((Operation) op).onRemove();
+			operationsLine.remove(op);
 		}
-		operationsLine.revalidate();
-		operationsLine.repaint();
-		this.changeListener.stateChanged(new ChangeEvent(this));
+		refreshOperationsView();
+		fireChangeEvent();
 	}
 
     public String getTitle() {
@@ -228,5 +232,11 @@ public class RecipeStepPanel extends JPanel {
 
     public RecipePanel getRecipePanel() {
         return this.recipePanel;
+    }
+
+    private void fireChangeEvent() {
+        if (this.changeListener != null) {
+            this.changeListener.stateChanged(new ChangeEvent(this));
+        }
     }
 }
