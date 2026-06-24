@@ -19,6 +19,7 @@ public class RequestFilterDialog extends JPanel {
 
     private static RequestFilterDialog instance = null;
     private static final List<String> FILTER_LABELS = Arrays.asList("Proxy", "Repeater", "Scanner", "Intruder", "Extender", "Sequencer");
+    private static final int PANEL_COLUMN_GAP = 12;
 
     public static RequestFilterDialog getInstance() {
         if (RequestFilterDialog.instance == null) {
@@ -33,7 +34,7 @@ public class RequestFilterDialog extends JPanel {
 
     private void rebuild() {
         List<RecipePanel> filterableRecipePanels = BurpUtils.getInstance().getView().getFilterableRecipePanels();
-        this.setLayout(new GridLayout(0, filterableRecipePanels.size() + 1));
+        this.setLayout(new GridLayout(0, filterableRecipePanels.size() + 1, PANEL_COLUMN_GAP, 0));
         this.removeAll();
         this.add(createLabelPanel());
 
