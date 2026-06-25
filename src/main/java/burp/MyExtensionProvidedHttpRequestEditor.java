@@ -7,35 +7,46 @@ import burp.api.montoya.http.message.HttpRequestResponse;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.ui.Selection;
 import burp.api.montoya.ui.editor.EditorOptions;
-import burp.api.montoya.ui.editor.RawEditor;
+import burp.api.montoya.ui.editor.HttpRequestEditor;
 import burp.api.montoya.ui.editor.extension.EditorCreationContext;
 import burp.api.montoya.ui.editor.extension.ExtensionProvidedHttpRequestEditor;
 import de.usd.cstchef.view.RecipePanel;
 import de.usd.cstchef.view.View;
 import de.usd.cstchef.view.filter.FilterState;
 
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 public class MyExtensionProvidedHttpRequestEditor implements ExtensionProvidedHttpRequestEditor
 {
-    private final RawEditor requestEditor;
+    private static final int REAPPLY_INTERVAL_MS = 500;
+
+    private final HttpRequestEditor requestEditor;
     private HttpRequestResponse requestResponse;
     private final MontoyaApi api;
     private final View view;
     private final ToolType toolType;
+    private final Timer reapplyTimer;
+    private ByteArray lastAppliedRequest = ByteArray.byteArray();
 
     MyExtensionProvidedHttpRequestEditor(EditorCreationContext creationContext, View view)
     {
         this.api = BurpUtils.getInstance().getApi();
         this.view = view;
         this.toolType = creationContext.toolSource().toolType();
-        requestEditor = api.userInterface().createRawEditor(EditorOptions.READ_ONLY);
-        requestEditor.uiComponent().addFocusListener(new CstcFocusRequestListener(this));
+        requestEditor = api.userInterface().createHttpRequestEditor(EditorOptions.READ_ONLY);
+
+        this.reapplyTimer = new Timer(REAPPLY_INTERVAL_MS, event -> {
+            if (shouldRefreshVisibleEditor()) {
+                reapplyRecipe();
+            }
+        });
+        this.reapplyTimer.start();
     }
 
     @Override
@@ -48,10 +59,25 @@ public class MyExtensionProvidedHttpRequestEditor implements ExtensionProvidedHt
     public void setRequestResponse(HttpRequestResponse requestResponse)
     {
         this.requestResponse = requestResponse;
+        applyBakedRequest(true);
+    }
 
-        if (requestResponse == null || requestResponse.request() == null) {
-            this.requestEditor.setContents(ByteArray.byteArray());
+    private void applyBakedRequest(boolean force)
+    {
+        ByteArray result = bakeRequest();
+
+        if (!force && Arrays.equals(this.lastAppliedRequest.getBytes(), result.getBytes())) {
             return;
+        }
+
+        this.lastAppliedRequest = result;
+        this.requestEditor.setRequest(HttpRequest.httpRequest(result));
+    }
+
+    private ByteArray bakeRequest()
+    {
+        if (requestResponse == null || requestResponse.request() == null) {
+            return ByteArray.byteArray();
         }
 
         ByteArray originalRequest = requestResponse.request().toByteArray();
@@ -61,7 +87,7 @@ public class MyExtensionProvidedHttpRequestEditor implements ExtensionProvidedHt
             result = recipePanel.bake(result, originalRequest);
         }
 
-        this.requestEditor.setContents(result);
+        return result;
     }
 
     public void reapplyRecipe()
@@ -70,7 +96,22 @@ public class MyExtensionProvidedHttpRequestEditor implements ExtensionProvidedHt
             return;
         }
 
-        this.setRequestResponse(this.requestResponse);
+        this.applyBakedRequest(false);
+    }
+
+    private boolean shouldRefreshVisibleEditor()
+    {
+        Component editorComponent = requestEditor.uiComponent();
+        if (!editorComponent.isDisplayable()) {
+            return false;
+        }
+
+        if (editorComponent.isShowing()) {
+            return true;
+        }
+
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        return focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, editorComponent);
     }
 
     @Override
@@ -163,28 +204,6 @@ public class MyExtensionProvidedHttpRequestEditor implements ExtensionProvidedHt
         private int getRecipeIndex()
         {
             return recipeIndex;
-        }
-    }
-
-    private static class CstcFocusRequestListener implements FocusListener
-    {
-        private final MyExtensionProvidedHttpRequestEditor requestEditor;
-
-        private CstcFocusRequestListener(MyExtensionProvidedHttpRequestEditor requestEditor)
-        {
-            this.requestEditor = requestEditor;
-        }
-
-        @Override
-        public void focusGained(FocusEvent e)
-        {
-            this.requestEditor.reapplyRecipe();
-        }
-
-        @Override
-        public void focusLost(FocusEvent e)
-        {
-            // Not needed
         }
     }
 }
