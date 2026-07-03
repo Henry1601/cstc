@@ -38,6 +38,7 @@ public class RecipeStepPanel extends JPanel {
     private ChangeListener changeListener;
     private JTextField contentTextField;
 
+    private RecipePanel recipePanel;
     private BurpOperation operation;
 
     private String comment;
@@ -46,9 +47,10 @@ public class RecipeStepPanel extends JPanel {
     private static ImageIcon commentIcon = new ImageIcon(Operation.class.getResource("/comment.png"));
     private static ImageIcon noCommentIcon = new ImageIcon(Operation.class.getResource("/no_comment.png"));
 
-    public RecipeStepPanel(String title, ChangeListener changelistener, BurpOperation operation) {
+    public RecipeStepPanel(String title, ChangeListener changelistener, RecipePanel recipePanel) {
         this.changeListener = changelistener;
-        this.operation = operation;
+        this.recipePanel = recipePanel;
+        this.operation = recipePanel.getOperation();
         this.setLayout(new BorderLayout());
         this.setPreferredSize(new Dimension(350, 0));
 
@@ -130,28 +132,33 @@ public class RecipeStepPanel extends JPanel {
 
     public void addComponent(Component comp, int index) {
         operationsLine.add(comp, addContraints, index);
-        operationsLine.revalidate();
-        operationsLine.repaint();
+        refreshOperationsView();
         if (comp instanceof Operation) {
             ((Operation) comp).setRecipeStepPanel(this);
             ((Operation) comp).setChangeListener(this.changeListener);
-            this.changeListener.stateChanged(new ChangeEvent(this));
+            fireChangeEvent();
         }
     }
 
+    @Override
     public void updateUI() {
+        super.updateUI();
         if(operationsLine != null) {
+            refreshOperationsView();
+        }
+    }
+
+    public void refreshOperationsView() {
+        if (operationsLine != null) {
             operationsLine.revalidate();
             operationsLine.repaint();
-            this.changeListener.stateChanged(new ChangeEvent(this));
         }
     }
 
     public void removeComponent(Component comp) {
         operationsLine.remove(comp);
-        operationsLine.revalidate();
-        operationsLine.repaint();
-        this.changeListener.stateChanged(new ChangeEvent(this));
+        refreshOperationsView();
+        fireChangeEvent();
     }
 
     public JPanel getOperationsPanel() {
@@ -179,11 +186,11 @@ public class RecipeStepPanel extends JPanel {
 			if (!(op instanceof Operation)) {
 				continue;
 			}
+			((Operation) op).onRemove();
 			operationsLine.remove(op);
 		}
-		operationsLine.revalidate();
-		operationsLine.repaint();
-		this.changeListener.stateChanged(new ChangeEvent(this));
+		refreshOperationsView();
+		fireChangeEvent();
 	}
 
     public String getTitle() {
@@ -197,8 +204,13 @@ public class RecipeStepPanel extends JPanel {
     private JButton createIconButton(ImageIcon icon) {
         JButton btn = new JButton();
         btn.setBorder(BorderFactory.createEmptyBorder());
+        btn.setBorderPainted(false);
         btn.setIcon(icon);
         btn.setContentAreaFilled(false);
+        btn.setFocusPainted(false);
+        btn.setFocusable(false);
+        btn.setOpaque(false);
+        btn.setRolloverEnabled(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
@@ -221,5 +233,15 @@ public class RecipeStepPanel extends JPanel {
         this.comment = "";
         commentBtn.setToolTipText("");
         commentBtn.setIcon(RecipeStepPanel.noCommentIcon);
+    }
+
+    public RecipePanel getRecipePanel() {
+        return this.recipePanel;
+    }
+
+    private void fireChangeEvent() {
+        if (this.changeListener != null) {
+            this.changeListener.stateChanged(new ChangeEvent(this));
+        }
     }
 }

@@ -34,6 +34,9 @@ public class HttpJsonSetter extends SetterOperation {
         }
 
         if (messageType == MessageType.REQUEST) {
+            if(!HttpRequest.httpRequest(input).hasParameter(parameterName, HttpParameterType.JSON) && !addIfNotPresent.isSelected()) {
+                return input;
+            }
             return HttpRequest.httpRequest(input)
                     .withParameter(HttpParameter.parameter(parameterName, getWhat(), HttpParameterType.JSON))
                     .toByteArray();
