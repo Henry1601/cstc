@@ -198,6 +198,7 @@ public abstract class Operation extends JPanel {
         errorArea.setEditable(false);
         errorArea.setLineWrap(true);
         errorArea.setWrapStyleWord(true);
+        errorArea.setOpaque(false);
         errorArea.setBackground(new Color(0, 0, 0, 0));
         errorArea.setFont(f.deriveFont(f.getStyle() | Font.BOLD));
         errorArea.setFocusable(false);
