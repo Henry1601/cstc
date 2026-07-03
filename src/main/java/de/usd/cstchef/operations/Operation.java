@@ -140,10 +140,12 @@ public abstract class Operation extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 commentBtn.setToolTipText(getComment());
                 String comment = JOptionPane.showInputDialog("Edit comment:", commentBtn.getToolTipText());
-                commentBtn.setToolTipText(comment);
-                setComment(comment);
-                ImageIcon newIcon = comment.isEmpty() ? Operation.noCommentIcon : Operation.commentIcon;
-                commentBtn.setIcon(newIcon);
+                if(comment != null) {
+                    commentBtn.setToolTipText(comment);
+                    setComment(comment);
+                    ImageIcon newIcon = comment.isEmpty() ? Operation.noCommentIcon : Operation.commentIcon;
+                    commentBtn.setIcon(newIcon);
+                }
             }
         });
         
