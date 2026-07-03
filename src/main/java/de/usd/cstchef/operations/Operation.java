@@ -9,6 +9,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.EOFException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -34,6 +36,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ToolTipManager;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.MatteBorder;
@@ -134,6 +137,19 @@ public abstract class Operation extends JPanel {
         removeBtn.setToolTipText("Remove");
         JButton helpBtn = createIconButton(Operation.helpIcon);
         helpBtn.setToolTipText(opInfos.description());
+        ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
+        int defaultDismissDelay = toolTipManager.getDismissDelay();
+        helpBtn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                toolTipManager.setDismissDelay(Integer.MAX_VALUE);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                toolTipManager.setDismissDelay(defaultDismissDelay);
+            }
+        });
         commentBtn = createIconButton(noCommentIcon);
 
         commentBtn.addActionListener(new ActionListener() {
