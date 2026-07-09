@@ -18,6 +18,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +75,9 @@ import de.usd.cstchef.view.ui.PlaceholderTextField;
 import de.usd.cstchef.view.ui.TextChangedListener;
 
 public class RecipePanel extends JPanel implements ChangeListener {
+
+    private static final Path FIRST_LAUNCH_MARKER = Paths.get(System.getProperty("user.home"), ".config", ".cstc");
+    private static final boolean SHOULD_INITIALIZE_DEFAULT_EXAMPLES = initializeDefaultExamplesFlag();
 
     private int operationSteps = 10;
     private boolean autoBake = true;
@@ -448,7 +452,7 @@ public class RecipePanel extends JPanel implements ChangeListener {
     }
 
     private void initializeDefaultExample() {
-        if (!isDefaultRecipePanel()) {
+        if (!isDefaultRecipePanel() || !SHOULD_INITIALIZE_DEFAULT_EXAMPLES) {
             return;
         }
 
@@ -476,6 +480,25 @@ public class RecipePanel extends JPanel implements ChangeListener {
         }
 
         bake(false);
+    }
+
+    private static boolean initializeDefaultExamplesFlag() {
+        try {
+            if (Files.exists(FIRST_LAUNCH_MARKER)) {
+                return false;
+            }
+
+            Path parentDirectory = FIRST_LAUNCH_MARKER.getParent();
+            if (parentDirectory != null) {
+                Files.createDirectories(parentDirectory);
+            }
+
+            Files.createFile(FIRST_LAUNCH_MARKER);
+            return true;
+        } catch (IOException e) {
+            Logger.getInstance().err("Could not create first-launch marker at '" + FIRST_LAUNCH_MARKER + "': " + e.getMessage());
+            return false;
+        }
     }
 
     private boolean isDefaultRecipePanel() {
