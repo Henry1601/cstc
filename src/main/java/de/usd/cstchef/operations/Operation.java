@@ -7,6 +7,9 @@ import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -27,16 +30,20 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JDialog;
 import javax.swing.JComboBox;
+import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.ToolTipManager;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.MatteBorder;
@@ -87,6 +94,8 @@ public abstract class Operation extends JPanel {
     private JTextArea errorArea;
     private Box contentBox;
     private Map<String, Component> uiElements;
+    private JDialog helpDialog;
+    private Timer helpHideTimer;
 
     private String comment;
     private JButton commentBtn;
@@ -136,20 +145,7 @@ public abstract class Operation extends JPanel {
         removeBtn = createIconButton(Operation.removeIcon);
         removeBtn.setToolTipText("Remove");
         JButton helpBtn = createIconButton(Operation.helpIcon);
-        helpBtn.setToolTipText(opInfos.description());
-        ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
-        int defaultDismissDelay = toolTipManager.getDismissDelay();
-        helpBtn.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                toolTipManager.setDismissDelay(Integer.MAX_VALUE);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                toolTipManager.setDismissDelay(defaultDismissDelay);
-            }
-        });
+        installHelpPopup(helpBtn, opInfos.description());
         commentBtn = createIconButton(noCommentIcon);
 
         commentBtn.addActionListener(new ActionListener() {
@@ -231,6 +227,7 @@ public abstract class Operation extends JPanel {
 
     public void triggerRemove() {
         Container parent = getParent();
+        disposeHelpPopup();
         onRemove();
         if (parent != null) {
             parent.remove(this);
@@ -355,6 +352,129 @@ public abstract class Operation extends JPanel {
         btn.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
         return btn;
+    }
+
+    private void installHelpPopup(JButton helpBtn, String helpText) {
+        helpBtn.setToolTipText(null);
+        this.helpHideTimer = new Timer(200, e -> hideHelpPopup());
+        this.helpHideTimer.setRepeats(false);
+
+        MouseAdapter hoverListener = new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                showHelpPopup(helpBtn, helpText);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                scheduleHelpPopupHide();
+            }
+        };
+
+        helpBtn.addMouseListener(hoverListener);
+    }
+
+    private void showHelpPopup(JButton helpBtn, String helpText) {
+        if (this.helpHideTimer != null && this.helpHideTimer.isRunning()) {
+            this.helpHideTimer.stop();
+        }
+
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        if (this.helpDialog == null || this.helpDialog.getOwner() != owner) {
+            disposeHelpPopup();
+            this.helpDialog = createHelpDialog(owner, helpText);
+        }
+
+        this.helpDialog.pack();
+
+        Point location = helpBtn.getLocationOnScreen();
+        Rectangle screenBounds = helpBtn.getGraphicsConfiguration().getBounds();
+        int x = location.x;
+        int y = location.y + helpBtn.getHeight() + 8;
+
+        if (x + this.helpDialog.getWidth() > screenBounds.x + screenBounds.width) {
+            x = screenBounds.x + screenBounds.width - this.helpDialog.getWidth() - 10;
+        }
+        if (y + this.helpDialog.getHeight() > screenBounds.y + screenBounds.height) {
+            y = Math.max(screenBounds.y + 10, location.y - this.helpDialog.getHeight() - 8);
+        }
+
+        x = Math.max(screenBounds.x + 10, x);
+        y = Math.max(screenBounds.y + 10, y);
+
+        this.helpDialog.setLocation(x, y);
+        this.helpDialog.setVisible(true);
+    }
+
+    private JDialog createHelpDialog(Window owner, String helpText) {
+        JDialog dialog = new JDialog(owner);
+        dialog.setUndecorated(true);
+        dialog.setModal(false);
+        dialog.setFocusableWindowState(false);
+        dialog.setAlwaysOnTop(true);
+
+        JEditorPane helpViewer = new JEditorPane("text/html", helpText);
+        helpViewer.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+        helpViewer.setEditable(false);
+        helpViewer.setOpaque(true);
+        helpViewer.setBackground(Color.WHITE);
+        helpViewer.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        helpViewer.setCaretPosition(0);
+
+        JScrollPane scrollPane = new JScrollPane(helpViewer);
+        scrollPane.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        scrollPane.setPreferredSize(new Dimension(620, 420));
+
+        MouseAdapter popupHoverListener = new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (helpHideTimer != null && helpHideTimer.isRunning()) {
+                    helpHideTimer.stop();
+                }
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                scheduleHelpPopupHide();
+            }
+        };
+
+        dialog.setContentPane(scrollPane);
+        dialog.addMouseListener(popupHoverListener);
+        attachHoverListener(dialog.getContentPane(), popupHoverListener);
+
+        return dialog;
+    }
+
+    private void attachHoverListener(Component component, MouseAdapter listener) {
+        component.addMouseListener(listener);
+        if (component instanceof Container) {
+            for (Component child : ((Container) component).getComponents()) {
+                attachHoverListener(child, listener);
+            }
+        }
+    }
+
+    private void scheduleHelpPopupHide() {
+        if (this.helpHideTimer != null) {
+            this.helpHideTimer.restart();
+        }
+    }
+
+    private void hideHelpPopup() {
+        if (this.helpDialog != null) {
+            this.helpDialog.setVisible(false);
+        }
+    }
+
+    private void disposeHelpPopup() {
+        if (this.helpHideTimer != null && this.helpHideTimer.isRunning()) {
+            this.helpHideTimer.stop();
+        }
+        if (this.helpDialog != null) {
+            this.helpDialog.dispose();
+            this.helpDialog = null;
+        }
     }
 
     private void refreshColors() {
