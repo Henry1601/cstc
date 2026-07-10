@@ -244,7 +244,7 @@ public class RecipePanel extends JPanel implements ChangeListener {
                 
                 if (!BurpUtils.getInstance().getApi().burpSuite().version().edition()
                         .equals(BurpSuiteEdition.COMMUNITY_EDITION)) {
-                    saveFilterState();
+                    BurpUtils.getInstance().getView().saveFilterState();
                 }
             }
         });
@@ -1022,18 +1022,6 @@ public class RecipePanel extends JPanel implements ChangeListener {
         } catch (IOException e) {
             Logger.getInstance().err(
                     "Could not save recipes to the Burp project. If you are running Burp Suite Community Edition, this behavior is expected since saving project files is exclusive to BurpSuite Pro users.");
-        }
-    }
-
-    private void saveFilterState() {
-        PersistedObject savedState = BurpUtils.getInstance().getApi().persistence().extensionData();
-        try {
-            savedState.setString("FilterState",
-                    new ObjectMapper().writeValueAsString(BurpUtils.getInstance().getFilterState()));
-        } catch (Exception e) {
-            Logger.getInstance().err(
-                    "Could not save the filter state to the Burp project. If you are running Burp Suite Community Edition, this behavior is expected since saving project files is exclusive to BurpSuite Pro users.\n"
-                            + e.getMessage());
         }
     }
 

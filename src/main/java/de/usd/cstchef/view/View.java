@@ -16,7 +16,10 @@ import javax.swing.WindowConstants;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import burp.BurpUtils;
+import burp.Logger;
 import burp.api.montoya.core.BurpSuiteEdition;
 import burp.api.montoya.persistence.PersistedList;
 import burp.api.montoya.persistence.PersistedObject;
@@ -69,8 +72,15 @@ public class View extends JPanel {
 
         Object[] options = { "Close" };
         JMenuItem openFilterDialogItem = new JMenuItem("Filter Dialog");
-        openFilterDialogItem.addActionListener(e -> JOptionPane.showOptionDialog(null, RequestFilterDialog.getInstance(), "Request Filter",
-                        JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]));
+        openFilterDialogItem.addActionListener(e -> {
+            JOptionPane.showOptionDialog(null, RequestFilterDialog.getInstance(), "Request Filter",
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+
+            if (!BurpUtils.getInstance().getApi().burpSuite().version().edition()
+                    .equals(BurpSuiteEdition.COMMUNITY_EDITION)) {
+                saveFilterState();
+            }
+        });
 
         cstcMenu.add(openFilterDialogItem);
         defaultMenuForeground = cstcMenu.getForeground();
@@ -201,6 +211,18 @@ public class View extends JPanel {
                 listOfRecipePanels.add(getRecipePanelAtIndex(i).getPersistenceId());
             }
             savedState.setStringList("listOfRecipePanels", listOfRecipePanels);
+        }
+    }
+
+    public void saveFilterState() {
+        PersistedObject savedState = BurpUtils.getInstance().getApi().persistence().extensionData();
+        try {
+            savedState.setString("FilterState",
+                    new ObjectMapper().writeValueAsString(BurpUtils.getInstance().getFilterState()));
+        } catch (Exception e) {
+            Logger.getInstance().err(
+                    "Could not save the filter state to the Burp project. If you are running Burp Suite Community Edition, this behavior is expected since saving project files is exclusive to BurpSuite Pro users.\n"
+                            + e.getMessage());
         }
     }
 }
