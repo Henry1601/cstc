@@ -9,7 +9,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -30,13 +29,15 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JDialog;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.Popup;
+import javax.swing.PopupFactory;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
@@ -94,7 +95,8 @@ public abstract class Operation extends JPanel {
     private JTextArea errorArea;
     private Box contentBox;
     private Map<String, Component> uiElements;
-    private JDialog helpDialog;
+    private Popup helpPopup;
+    private JComponent helpPopupContent;
     private Timer helpHideTimer;
 
     private String comment;
@@ -359,10 +361,14 @@ public abstract class Operation extends JPanel {
         this.helpHideTimer = new Timer(200, e -> hideHelpPopup());
         this.helpHideTimer.setRepeats(false);
 
+        helpBtn.addActionListener(e -> SwingUtilities.invokeLater(() -> showHelpPopup(helpBtn, helpText)));
+
         MouseAdapter hoverListener = new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                showHelpPopup(helpBtn, helpText);
+                if (helpHideTimer != null && helpHideTimer.isRunning()) {
+                    helpHideTimer.stop();
+                }
             }
 
             @Override
@@ -379,40 +385,33 @@ public abstract class Operation extends JPanel {
             this.helpHideTimer.stop();
         }
 
-        Window owner = SwingUtilities.getWindowAncestor(this);
-        if (this.helpDialog == null || this.helpDialog.getOwner() != owner) {
-            disposeHelpPopup();
-            this.helpDialog = createHelpDialog(owner, helpText);
-        }
+        disposeHelpPopup();
 
-        this.helpDialog.pack();
+        this.helpPopupContent = createHelpPopupContent(helpText);
+        Dimension popupSize = this.helpPopupContent.getPreferredSize();
 
         Point location = helpBtn.getLocationOnScreen();
         Rectangle screenBounds = helpBtn.getGraphicsConfiguration().getBounds();
         int x = location.x;
         int y = location.y + helpBtn.getHeight() + 8;
 
-        if (x + this.helpDialog.getWidth() > screenBounds.x + screenBounds.width) {
-            x = screenBounds.x + screenBounds.width - this.helpDialog.getWidth() - 10;
+        if (x + popupSize.width > screenBounds.x + screenBounds.width) {
+            x = screenBounds.x + screenBounds.width - popupSize.width - 10;
         }
-        if (y + this.helpDialog.getHeight() > screenBounds.y + screenBounds.height) {
-            y = Math.max(screenBounds.y + 10, location.y - this.helpDialog.getHeight() - 8);
+        if (y + popupSize.height > screenBounds.y + screenBounds.height) {
+            y = Math.max(screenBounds.y + 10, location.y - popupSize.height - 8);
         }
 
         x = Math.max(screenBounds.x + 10, x);
         y = Math.max(screenBounds.y + 10, y);
 
-        this.helpDialog.setLocation(x, y);
-        this.helpDialog.setVisible(true);
+        this.helpPopup = PopupFactory.getSharedInstance().getPopup(helpBtn, this.helpPopupContent, x, y);
+        this.helpPopup.show();
+        helpBtn.getModel().setArmed(false);
+        helpBtn.getModel().setPressed(false);
     }
 
-    private JDialog createHelpDialog(Window owner, String helpText) {
-        JDialog dialog = new JDialog(owner);
-        dialog.setUndecorated(true);
-        dialog.setModal(false);
-        dialog.setFocusableWindowState(false);
-        dialog.setAlwaysOnTop(true);
-
+    private JComponent createHelpPopupContent(String helpText) {
         JEditorPane helpViewer = new JEditorPane("text/html", helpText);
         helpViewer.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
         helpViewer.setEditable(false);
@@ -424,6 +423,7 @@ public abstract class Operation extends JPanel {
         JScrollPane scrollPane = new JScrollPane(helpViewer);
         scrollPane.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         scrollPane.setPreferredSize(new Dimension(620, 420));
+        scrollPane.setOpaque(true);
 
         MouseAdapter popupHoverListener = new MouseAdapter() {
             @Override
@@ -439,11 +439,9 @@ public abstract class Operation extends JPanel {
             }
         };
 
-        dialog.setContentPane(scrollPane);
-        dialog.addMouseListener(popupHoverListener);
-        attachHoverListener(dialog.getContentPane(), popupHoverListener);
+        attachHoverListener(scrollPane, popupHoverListener);
 
-        return dialog;
+        return scrollPane;
     }
 
     private void attachHoverListener(Component component, MouseAdapter listener) {
@@ -462,8 +460,10 @@ public abstract class Operation extends JPanel {
     }
 
     private void hideHelpPopup() {
-        if (this.helpDialog != null) {
-            this.helpDialog.setVisible(false);
+        if (this.helpPopup != null) {
+            this.helpPopup.hide();
+            this.helpPopup = null;
+            this.helpPopupContent = null;
         }
     }
 
@@ -471,9 +471,10 @@ public abstract class Operation extends JPanel {
         if (this.helpHideTimer != null && this.helpHideTimer.isRunning()) {
             this.helpHideTimer.stop();
         }
-        if (this.helpDialog != null) {
-            this.helpDialog.dispose();
-            this.helpDialog = null;
+        if (this.helpPopup != null) {
+            this.helpPopup.hide();
+            this.helpPopup = null;
+            this.helpPopupContent = null;
         }
     }
 
