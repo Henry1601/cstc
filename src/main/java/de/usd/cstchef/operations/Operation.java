@@ -129,6 +129,7 @@ public abstract class Operation extends JPanel {
 
         // add header
         JPanel header = new JPanel();
+        header.setOpaque(false);
         header.setBackground(new Color(0, 0, 0, 0)); // transparent
 
         BoxLayout layout = new BoxLayout(header, BoxLayout.X_AXIS);
@@ -342,14 +343,16 @@ public abstract class Operation extends JPanel {
 
     private JButton createIconButton(ImageIcon icon) {
         JButton btn = new JButton();
+        btn.setOpaque(false);
+        btn.setBackground(new Color(0, 0, 0, 0));
         btn.setBorder(BorderFactory.createEmptyBorder());
         btn.setBorderPainted(false);
         btn.setIcon(icon);
         btn.setContentAreaFilled(false);
         btn.setFocusPainted(false);
-        btn.setFocusable(false);
-        btn.setOpaque(false);
         btn.setRolloverEnabled(false);
+        btn.setRequestFocusEnabled(false);
+        btn.setFocusable(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
